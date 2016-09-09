@@ -9,6 +9,14 @@ module.exports = {
   },
   resolveLoader: {
     root: path.join(__dirname, 'node_modules')
+  },
+  module: {
+    loaders: [
+      {
+        test: /.mp3$/,
+        loader: 'file?name=[path][name].[ext]'
+      }
+    ]
   }
 }
 
@@ -17,7 +25,6 @@ if ('production' === process.env.NODE_ENV) {
 
   module.exports.plugins = [
     new CopyWebpackPlugin([
-      { from: 'samples', to: 'samples' },
       { from: 'index.html', to: 'index.html' }
     ])
   ]

@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "samples:convert": "find samples/judd-madden -type f -name \"*.wav\" | while read wav; do echo $wav; ffmpeg -nostdin -y -v error -ss 0 -t 1.9 -i \"$wav\" -af 'afade=t=out:st=1.5:d=0.4' \"$(echo $wav | sed 's/\\.wav$/\\.mp3/')\"; done; true"
+  },
   "dependencies": {
     "audio-manager": "^0.1.16",
     "ramda": "^0.22.1",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "copy-webpack-plugin": "^3.0.1",
+    "file-loader": "^0.9.0",
     "webpack": "^1.13.2",
     "webpack-dev-server": "^1.15.1"
   }

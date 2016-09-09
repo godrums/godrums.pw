@@ -2,6 +2,8 @@ const R = require('ramda')
 const webmidi = require('webmidi')
 const AudioManager = require('audio-manager')
 
+const kit = require('./kit')
+
 webmidi.enable(function (err) {
   if (err) {
     console.log('error')
@@ -10,31 +12,21 @@ webmidi.enable(function (err) {
 
   const audioManager = new AudioManager(['drums'])
   audioManager.init()
-  audioManager.settings.audioPath = '/samples/'
+  audioManager.settings.audioPath = '/'
   audioManager.setVolume('drums', 1)
 
-  const kit = {
-    kick: 'kick',
-    snare: 'snare',
-    tom1: 'tom1',
-    tom2: 'tom2',
-    tom3: 'tom3',
-    hihatOpened: 'hihat-opened',
-    hihatClose: 'hihat-close',
-    hihatClosed: 'hihat-closed',
-    crash: 'crash',
-    ride: 'ride'
-  }
-
   const drums = R.mapObjIndexed(function (piece) {
-    const sound = audioManager.createSound(piece)
-    sound.load()
-    return sound
+    return piece.map(function (variant) {
+      const sound = audioManager.createSound(variant.replace('.mp3', ''))
+      sound.load()
+      return sound
+    })
   }, kit)
 
   const map = {
     'C-1': drums.kick,
     'D-1': drums.snare,
+    'E-1': drums.rim,
     'C0': drums.tom1,
     'A-1': drums.tom2,
     'G-1': drums.tom3,
@@ -65,9 +57,17 @@ webmidi.enable(function (err) {
     const input = webmidi.getInputByName(selector.value)
     connect.disabled = true
 
+    var last = null
     input.addListener('noteon', 'all', function (e) {
       const key = e.note.name + e.note.octave
-      map[key].play()
+      const weight = Math.round(e.velocity * map[key].length) - 1
+
+      if (last && drums.hihatOpened.indexOf(last) >= 0) {
+        last.stop()
+      }
+
+      last = map[key][weight]
+      last.play()
     })
   }
 
