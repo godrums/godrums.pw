@@ -3,14 +3,13 @@ const webmidi = require('webmidi')
 const AudioManager = require('audio-manager')
 
 const kit = require('./kit')
+const drumming = require('./drumming.html')
 
-webmidi.enable(function (err) {
-  if (err) {
-    console.log('error')
-    return
-  }
-
+document.addEventListener('DOMContentLoaded', function () {
   const audioManager = new AudioManager(['drums'])
+  const body = document.getElementsByTagName('body')[0]
+  const midi = document.getElementById('midi-input')
+
   audioManager.init()
   audioManager.settings.audioPath = '/'
   audioManager.setVolume('drums', 1)
@@ -23,7 +22,7 @@ webmidi.enable(function (err) {
     })
   }, kit)
 
-  const map = {
+  const noteMap = {
     'C-1': drums.kick,
     'D-1': drums.snare,
     'E-1': drums.rim,
@@ -37,38 +36,68 @@ webmidi.enable(function (err) {
     'D#0': drums.ride
   }
 
-  const selector = document.getElementById('devices-select')
-  const connect = document.getElementById('device-connect-button')
+  body.innerHTML = drumming
 
-  selector.innerHTML =
-    webmidi.inputs.reduce(function (memo, input) {
-      return memo +
-        '<option value="' + input.name + '">' +
-        input.name +
-        '</option>'
-    }, '')
+  const svgMap = {
+    kick: drums.kick,
+    tom1: drums.tom1,
+    tom2: drums.tom2,
+    tom3: drums.tom3,
+    hihat: drums.hihatClosed,
+    snare: drums.snare,
+    ride: drums.ride,
+    crash: drums.crash
+  }
 
-  connect.onclick = function (event) {
-    if (!selector.value) {
-      window.alert('No MIDI device')
+  Object.keys(svgMap).forEach(function (piece) {
+    console.log(piece)
+    const el = document.getElementById(piece)
+    el.onclick = function () {
+      svgMap[piece][0].play()
+    }
+  })
+
+  webmidi.enable(function (err) {
+    if (err) {
+      midi.innerHTML = "Sorry, your browser doesn't support Web MIDI"
       return
     }
 
-    const input = webmidi.getInputByName(selector.value)
-    connect.disabled = true
+    const selector = document.getElementById('devices-select')
+    const connect = document.getElementById('device-connect-button')
+    const kick = document.getElementById('Kick')
 
-    var last = null
-    input.addListener('noteon', 'all', function (e) {
-      const key = e.note.name + e.note.octave
-      const weight = Math.round(e.velocity * map[key].length) - 1
+    if (webmidi.inputs.length <= 0) {
+      midi.innerHTML = "No MIDI inputs found on your system."
+      return
+    }
 
-      if (last && drums.hihatOpened.indexOf(last) >= 0) {
-        last.stop()
-      }
+    selector.innerHTML =
+      webmidi.inputs.reduce(function (memo, input) {
+        return memo +
+          '<option value="' + input.name + '">' +
+            input.name +
+          '</option>'
+      }, '')
 
-      last = map[key][weight]
-      last.play()
-    })
-  }
+    connect.onclick = function (event) {
+      const input = webmidi.getInputByName(selector.value)
+      connect.disabled = true
 
-})
+      var last = null
+      input.addListener('noteon', 'all', function (e) {
+        const key = e.note.name + e.note.octave
+        const weight = Math.round(e.velocity * noteMap[key].length) - 1
+
+        if (last && drums.hihatOpened.indexOf(last) >= 0) {
+          last.stop()
+        }
+
+        last = noteMap[key][weight]
+        last.play()
+      })
+    }
+
+  })
+
+}, false)

@@ -1,0 +1,9 @@
+#drumkit {
+    width: 100%;
+    text-align: center;
+}
+
+#drumkit svg {
+    max-width: 60vw;
+    max-height: 40vw;
+}

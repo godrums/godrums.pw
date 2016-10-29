@@ -15,6 +15,10 @@ module.exports = {
       {
         test: /.mp3$/,
         loader: 'file?name=[path][name].[ext]'
+      },
+      {
+        test: /.(html|svg)$/,
+        loader: 'html?interpolate'
       }
     ]
   }
